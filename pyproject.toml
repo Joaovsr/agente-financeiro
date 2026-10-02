@@ -1,0 +1,30 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "agente-financeiro"
+version = "0.1.0"
+description = "Agente financeiro pessoal para Telegram"
+requires-python = ">=3.12"
+dependencies = [
+  "fastapi>=0.115",
+  "uvicorn>=0.30",
+  "sqlalchemy>=2.0",
+  "alembic>=1.13",
+  "psycopg[binary]>=3.2",
+  "openai>=1.80",
+  "imageio-ffmpeg>=0.6",
+  "httpx>=0.27",
+  "aiogram>=3.0",
+  "pydantic-settings>=2.0",
+]
+
+[project.optional-dependencies]
+test = ["pytest>=8", "pytest-cov>=5"]
+
+[tool.setuptools.packages.find]
+include = ["finance_agent*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

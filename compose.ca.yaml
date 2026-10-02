@@ -1,0 +1,18 @@
+# Use junto de compose.dev.yaml apenas em redes que exigem CA privada no build.
+services:
+  migrate:
+    build:
+      secrets:
+        - pip_ca
+  api:
+    build:
+      secrets:
+        - pip_ca
+  scheduler:
+    build:
+      secrets:
+        - pip_ca
+
+secrets:
+  pip_ca:
+    file: ${REQUESTS_CA_BUNDLE:?Defina REQUESTS_CA_BUNDLE para o bundle PEM de certificados}

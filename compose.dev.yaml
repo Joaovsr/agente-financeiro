@@ -1,0 +1,57 @@
+name: agente-financeiro-dev
+
+x-app-environment: &app-environment
+  APP_ENV: development
+  DATABASE_URL: postgresql+psycopg://postgres@db:5432/finance_test
+  OWNER_ID: local-test
+  TELEGRAM_USER_ID: "1"
+  TELEGRAM_BOT_TOKEN: "123456:development-only"
+  TELEGRAM_WEBHOOK_SECRET: "local-test-secret-123456"
+  OPENAI_API_KEY: "development-only"
+
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: finance_test
+      POSTGRES_HOST_AUTH_METHOD: trust
+    tmpfs:
+      - /var/lib/postgresql/data
+    ports:
+      - "127.0.0.1:${AGENT_TEST_DB_PORT:-55432}:5432"
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "postgres", "-d", "finance_test"]
+      interval: 2s
+      timeout: 3s
+      retries: 20
+
+  migrate:
+    build: .
+    command: ["python", "-m", "alembic", "upgrade", "head"]
+    environment: *app-environment
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: "no"
+
+  api:
+    build: .
+    environment: *app-environment
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+    ports:
+      - "127.0.0.1:${AGENT_TEST_API_PORT:-8000}:8000"
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/readyz', timeout=3)"]
+      interval: 5s
+      timeout: 4s
+      retries: 12
+
+  scheduler:
+    build: .
+    command: ["python", "-m", "finance_agent.scheduler"]
+    environment: *app-environment
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
